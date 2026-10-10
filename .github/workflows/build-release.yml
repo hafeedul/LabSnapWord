@@ -1,0 +1,41 @@
+name: Build Windows App (LabSnapWord)
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Restore Binary Icon Assets
+        shell: pwsh
+        run: |
+          if (-not (Test-Path "LabSnapWord/Assets/app_logo.png") -and (Test-Path "LabSnapWord/Assets/app_logo.png.b64")) {
+            [IO.File]::WriteAllBytes("LabSnapWord/Assets/app_logo.png", [Convert]::FromBase64String((Get-Content "LabSnapWord/Assets/app_logo.png.b64" -Raw)))
+          }
+          if (-not (Test-Path "LabSnapWord/Assets/app_icon.ico") -and (Test-Path "LabSnapWord/Assets/app_icon.ico.b64")) {
+            [IO.File]::WriteAllBytes("LabSnapWord/Assets/app_icon.ico", [Convert]::FromBase64String((Get-Content "LabSnapWord/Assets/app_icon.ico.b64" -Raw)))
+          }
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Publish Standalone Windows Installer & App
+        run: |
+          dotnet publish LabSnapWord/LabSnapWord.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o publish
+          Copy-Item publish/LabSnapWord.exe publish/LabSnapWord-Setup.exe
+
+      - name: Upload Windows Executables Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: LabSnapWord-Windows-x64
+          path: |
+            publish/LabSnapWord-Setup.exe
+            publish/LabSnapWord.exe
