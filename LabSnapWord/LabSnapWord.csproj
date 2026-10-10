@@ -19,6 +19,10 @@
     <Version>2.0.0</Version>
   </PropertyGroup>
 
+  <Target Name="RestoreBinaryIcons" BeforeTargets="BeforeBuild;PrepareForBuild;BeforeResGen" Condition="!Exists('Assets\app_icon.ico') Or !Exists('Assets\app_logo.png')">
+    <Exec Command="powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command &quot;if (-not (Test-Path 'Assets/app_logo.png') -and (Test-Path 'Assets/app_logo.png.b64')) { [IO.File]::WriteAllBytes('Assets/app_logo.png', [Convert]::FromBase64String((Get-Content 'Assets/app_logo.png.b64' -Raw))) }; if (-not (Test-Path 'Assets/app_icon.ico') -and (Test-Path 'Assets/app_icon.ico.b64')) { [IO.File]::WriteAllBytes('Assets/app_icon.ico', [Convert]::FromBase64String((Get-Content 'Assets/app_icon.ico.b64' -Raw))) }&quot;" WorkingDirectory="$(MSBuildProjectDirectory)" />
+  </Target>
+
   <ItemGroup>
     <Resource Include="Assets\app_icon.ico" />
     <Resource Include="Assets\app_logo.png" />
